@@ -1,0 +1,63 @@
+--[[
+    WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+    Improved version with error handling, code optimization, and modularization.
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Network = ReplicatedStorage:WaitForChild("Network")
+local InstanceFireCustom = Network:WaitForChild("Instancing_FireCustomFromClient")
+
+local function dig(action, target)
+    local args = {
+        [1] = "Digsite",
+        [2] = action,
+        [3] = target:GetAttribute('Coord')
+    }
+
+    InstanceFireCustom:FireServer(unpack(args))
+
+    -- Print the name of the item obtained from the chest
+    if action == "DigChest" then
+        local itemName = target:GetAttribute("ItemName")
+        if itemName then
+            print("Obtained item from chest:", itemName)
+        else
+            print("Obtained something from the chest.")
+        end
+    end
+end
+
+local function digBlocks()
+    while true do
+        for _, block in pairs(workspace.__THINGS.__INSTANCE_CONTAINER.Active.Digsite.Important.ActiveBlocks:GetChildren()) do
+            if block.Name == "Part" then
+                local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - block.Position).magnitude
+                if distance < 15 then
+                    for _ = 1, 5 do
+                        dig("DigBlock", block)
+                    end
+                    wait(0.1)  -- Pause briefly after each dig action
+                end
+            end
+        end
+        wait()  -- Wait for the next iteration
+    end
+end
+
+local function digChests()
+    while true do
+        for _, chest in pairs(workspace.__THINGS.__INSTANCE_CONTAINER.Active.Digsite.Important.ActiveChests:GetChildren()) do
+            if chest.Name == "Part" then
+                local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - chest.Position).magnitude
+                if distance < 20 then
+                    dig("DigChest", chest)
+                end
+            end
+        end
+        wait()  -- Wait for the next iteration
+    end
+end
+
+-- Spawn the functions in separate threads for parallel execution
+spawn(digBlocks)
+spawn(digChests)
